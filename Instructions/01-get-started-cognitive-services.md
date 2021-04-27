@@ -41,18 +41,20 @@ Azure Cognitive Services are cloud-based services that encapsulate artificial in
 
 The cognitive services APIs are REST-based, so you can consume them by submitting JSON requests over HTTP. In this example, you'll explore a console application that uses the **Text Analytics** REST API to perform language detection; but the basic principle is the same for all of the APIs supported by the Cognitive Services resource.
 
-> **Note**: In this exercise, you can choose to use the REST API from either **C#** or **Python**. In the steps below, perform the actions appropriate for your preferred language.
+> **Note**: In this exercise, you can choose to use the REST API from either **C#** or **Python** or Node.js**.                           In the steps below, perform the actions appropriate for your preferred language.
 
-1. In Visual Studio Code, in the **Explorer** pane, browse to the **01-getting-started** folder and expand the **C-Sharp** or **Python** folder depending on your language preference.
+1. In Visual Studio Code, in the **Explorer** pane, browse to the **01-getting-started** folder and expand the **C-Sharp** or **Python** or **Node.js** folder depending on your language preference.
 2. View the contents of the **rest-client** folder, and note that it contains a file for configuration settings:
     - **C#**: appsettings.json
     - **Python**: .env
+    - **Node.js**: .env
 
     Open the configuration file and update the configuration values it contains to reflect the **endpoint** and an authentication **key** for your cognitive services resource. Save your changes.
 4. Note that the **rest-client** folder contains a code file for the client application:
 
     - **C#**: Program.cs
     - **Python**: rest-client.py
+    - **Node.js**: rest-client.js
 
     Open the code file and review the code it contains, noting the following details:
     - Various namespaces are imported to enable HTTP communication
@@ -75,6 +77,12 @@ The cognitive services APIs are REST-based, so you can consume them by submittin
     python rest-client.py
     ```
 
+    **Node.js**
+
+    ```
+    node rest-client.js
+    ```
+
 6. When prompted, enter some text and review the language that is detected by the service, which is returned in the JSON response. For example, try entering "Hello", "Bonjour", and "Hola".
 7. When you have finished testing the application, enter "quit" to stop the program.
 
@@ -82,7 +90,7 @@ The cognitive services APIs are REST-based, so you can consume them by submittin
 
 You can write code that consumes cognitive services REST APIs directly, but there are software development kits (SDKs) for many popular programming languages, including Microsoft C#, Python, and Node.js. Using an SDK can greatly simplify development of applications that consume cognitive services.
 
-1. In Visual Studio Code, in the **Explorer** pane, in the **01-getting-started** folder, expand the **C-Sharp** or **Python** folder depending on your language preference.
+1. In Visual Studio Code, in the **Explorer** pane, in the **01-getting-started** folder, expand the **C-Sharp** or **Python** or **Node.js** folder depending on your language preference.
 2. Right-click the **sdk-client** folder and open an integrated terminal. Then install the Text Analytics SDK package by running the appropriate command for your language preference:
 
     **C#**
@@ -97,9 +105,17 @@ You can write code that consumes cognitive services REST APIs directly, but ther
     pip install azure-ai-textanalytics==5.0.0
     ```
 
+    **Node.js**
+
+    ```
+    npm install @azure/ai-text-analytics
+    ```
+    
+
 3. View the contents of the **sdk-client** folder, and note that it contains a file for configuration settings:
     - **C#**: appsettings.json
     - **Python**: .env
+    - **Node.js**: .env
 
     Open the configuration file and update the configuration values it contains to reflect the **endpoint** and an authentication **key** for your cognitive services resource. Save your changes.
     
@@ -107,6 +123,7 @@ You can write code that consumes cognitive services REST APIs directly, but ther
 
     - **C#**: Program.cs
     - **Python**: sdk-client.py
+    - **Node.js**: sdk-client.js
 
     Open the code file and review the code it contains, noting the following details:
     - The namespace for the SDK you installed is imported
@@ -126,6 +143,11 @@ You can write code that consumes cognitive services REST APIs directly, but ther
     python sdk-client.py
     ```
 
+    **Node.js**
+
+    ```
+    node sdk-client.js
+    ```
 6. When prompted, enter some text and review the language that is detected by the service. For example, try entering "Goodbye", "Au revoir", and "Hasta la vista".
 7. When you have finished testing the application, enter "quit" to stop the program.
 

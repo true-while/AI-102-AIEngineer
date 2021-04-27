@@ -70,7 +70,7 @@ function GetLanguage(text) {
       catch  (error) {
         // Something went wrong, write the error
         log(error)
-        Promise.reject()
+        reject()
       }
     });
 }

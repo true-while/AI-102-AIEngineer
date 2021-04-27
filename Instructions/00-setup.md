@@ -31,7 +31,16 @@ Install [Edge (Chromium)](https://microsoft.com/edge)
 ### Node.JS
 
 1. Download the latest LTS version from https://nodejs.org/en/download/ 
-2. Install using the default options
+2. Install using the default options package globally
+
+```
+npm install -g dotenv, path, readline, https
+```
+3. Run following command fore each NEW project to link globally installed packages from the folder of your project:
+
+```
+npm link dotenv, path, readline, https
+```
 
 ### Python (and required packages)
 
@@ -61,6 +70,7 @@ pip install --upgrade numpy
 3. After installation, start Visual Studio Code and on the **Extensions** tab (CTRL+SHIFT+X), search for and install the following extensions from Microsoft:
     - Python
     - C#
+    - Node.js
     - Azure Functions
     - PowerShell
 
