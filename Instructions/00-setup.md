@@ -28,7 +28,7 @@ Install [Edge (Chromium)](https://microsoft.com/edge)
 
 1. Download and install the Visual C++ Redistributable (x64) from https://aka.ms/vs/16/release/vc_redist.x64.exe.
 
-### Node.JS
+### Node.js
 
 1. Download the latest LTS version from https://nodejs.org/en/download/ 
 2. Install using the default options package globally

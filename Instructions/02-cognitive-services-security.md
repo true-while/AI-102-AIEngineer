@@ -160,7 +160,7 @@ Now you're ready to use the service principal identity in an application, so it 
 
 > **Note**: In this exercise, we'll store the service principal credentials in the application configuration and use them to authenticate a **ClientSecretCredential** identity in your application code. This is fine for development and testing, but in a real production application, an administrator would assign a *managed identity* to the application so that it uses the service principal identity to access resources, without caching or storing the password.
 
-1. In Visual Studio Code, expand the **02-cognitive-security** folder and the **C-Sharp** or **Python** folder depending on your language preference.
+1. In Visual Studio Code, expand the **02-cognitive-security** folder and the **C-Sharp** or **Python** or **Node.js** folder depending on your language preference.
 2. Right-click the **keyvault-client** folder and open an integrated terminal. Then install the packages you will need to use Azure Key Vault and the Text Analytics API in your cognitive services resource by running the appropriate command for your language preference:
 
     **C#**
@@ -179,9 +179,18 @@ Now you're ready to use the service principal identity in an application, so it 
     pip install azure-keyvault-secrets==4.2.0
     ```
 
+    **Node.js**
+
+    ```
+    npm install @azure/identity  
+    npm install @azure/ai-text-analytics
+    npm install @azure/keyvault-secrets
+    ```
+
 3. View the contents of the **keyvault-client** folder, and note that it contains a file for configuration settings:
     - **C#**: appsettings.json
     - **Python**: .env
+    - **Node.js**: .env
 
     Open the configuration file and update the configuration values it contains to reflect the following settings:
     
@@ -196,6 +205,7 @@ Now you're ready to use the service principal identity in an application, so it 
 
     - **C#**: Program.cs
     - **Python**: keyvault-client.py
+    - **Node.js**: keyvault-client.js
 
     Open the code file and review the code it contains, noting the following details:
     - The namespace for the SDK you installed is imported
@@ -213,6 +223,12 @@ Now you're ready to use the service principal identity in an application, so it 
 
     ```
     python keyvault-client.py
+    ```
+
+    **Node.js**
+
+    ```
+    node keyvault-client.js
     ```
 
 6. When prompted, enter some text and review the language that is detected by the service. For example, try entering "Hello", "Bonjour", and "Hola".
