@@ -39,7 +39,7 @@ npm install -g dotenv, path, readline, https, fs
 3. Run following command fore each NEW project to link globally installed packages from the folder of your project:
 
 ```
-npm link dotenv, path, readline, https
+npm link dotenv, path, readline, https, fs
 ```
 
 ### Python (and required packages)
