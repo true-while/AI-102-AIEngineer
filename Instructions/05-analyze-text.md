@@ -40,9 +40,9 @@ If you don't already have one in your subscription, you'll need to provision a *
 
 In this exercise, you'll complete a partially implemented client application that uses the Text Analysis SDK to analyze hotel reviews.
 
-> **Note**: You can choose to use the SDK for either **C#** or **Python**. In the steps below, perform the actions appropriate for your preferred language.
+> **Note**: You can choose to use the SDK for either **C#** or **Python** or **Node.js** In the steps below, perform the actions appropriate for your preferred language.
 
-1. In Visual Studio Code, in the **Explorer** pane, browse to the **05-analyze-text** folder and expand the **C-Sharp** or **Python** folder depending on your language preference.
+1. In Visual Studio Code, in the **Explorer** pane, browse to the **05-analyze-text** folder and expand the **C-Sharp** or **Python** or **Node.js** folder depending on your language preference.
 2. Right-click the **text-analysis** folder and open an integrated terminal. Then install the Text Analytics SDK package by running the appropriate command for your language preference:
     
     **C#**
@@ -56,10 +56,19 @@ In this exercise, you'll complete a partially implemented client application tha
     ```
     pip install azure-ai-textanalytics==5.0.0
     ```
+
+    **Node.js**
     
+    ```
+    npm install @azure/ai-text-analytics
+
+    ```
+
+
 3. View the contents of the **text-analysis** folder, and note that it contains a file for configuration settings:
     - **C#**: appsettings.json
     - **Python**: .env
+    - **Node.js**: .env
 
     Open the configuration file and update the configuration values it contains to reflect the **endpoint** and an authentication **key** for your cognitive services resource. Save your changes.
 
@@ -67,12 +76,13 @@ In this exercise, you'll complete a partially implemented client application tha
 
     - **C#**: Program.cs
     - **Python**: text-analysis.py
+    - **Node.js**: text-analysis.js
 
     Open the code file and at the top, under the existing namespace references, find the comment **Import namespaces**. Then, under this comment, add the following language-specific code to import the namespaces you will need to use the Text Analytics SDK:
 
     **C#**
     
-    ```C#
+    ```c#
     // import namespaces
     using Azure;
     using Azure.AI.TextAnalytics;
@@ -86,11 +96,18 @@ In this exercise, you'll complete a partially implemented client application tha
     from azure.ai.textanalytics import TextAnalyticsClient
     ```
 
+    **Node.js**
+
+    ```javascript
+    // import namespaces
+    const { TextAnalyticsClient, AzureKeyCredential } = require("@azure/ai-text-analytics");
+    ```
+
 5. In the **Main** function, note that code to load the cognitive services endpoint and key from the configuration file has already been provided. Then find the comment **Create client using endpoint and key**, and add the following code to create a client for the Text Analysis API:
 
     **C#**
 
-    ```C#
+    ```c#
     // Create client using endpoint and key
     AzureKeyCredential credentials = new AzureKeyCredential(cogSvcKey);
     Uri endpoint = new Uri(cogSvcEndpoint);
@@ -103,6 +120,12 @@ In this exercise, you'll complete a partially implemented client application tha
     # Create client using endpoint and key
     credential = AzureKeyCredential(cog_key)
     cog_client = TextAnalyticsClient(endpoint=cog_endpoint, credential=credential)
+    ```
+
+    **Node.js**
+
+    ```javascript
+    client = new TextAnalyticsClient(uri, new AzureKeyCredential(process.env.COG_SERVICE_KEY));
     ```
 
 6. Save your changes and return to the integrated terminal for the **text-analysis** folder, and enter the following command to run the program:
@@ -119,6 +142,12 @@ In this exercise, you'll complete a partially implemented client application tha
     python text-analysis.py
     ```
 
+    **Node.js**
+
+    ```
+    node text-analysis.js
+    ```
+
 6. Observe the output as the code should run without error, displaying the contents of each review text file in the **reviews** folder. The application successfully creates a client for the Text Analytics API but doesn't make use of it. We'll fix that in the next procedure.
 
 ## Detect language
@@ -129,7 +158,7 @@ Now that you have created a client for the Text Analytics API, let's use it to d
 
     **C#**
     
-    ```C
+    ```c#
     // Get language
     DetectedLanguage detectedLanguage = CogClient.DetectLanguage(text);
     Console.WriteLine($"\nLanguage: {detectedLanguage.Name}");
@@ -141,6 +170,14 @@ Now that you have created a client for the Text Analytics API, let's use it to d
     # Get language
     detectedLanguage = cog_client.detect_language(documents=[text])[0]
     print('\nLanguage: {}'.format(detectedLanguage.primary_language.name))
+    ```
+
+    **Node.js**
+    
+    ```javascript
+    // Get language
+    var detectedLanguage = await client.detectLanguage([file.content], "none");
+    log(`Language: ${detectedLanguage[0].primaryLanguage.name}`)
     ```
 
     > **Note**: *In this example, each review is analyzed individually, resulting in a separate call to the service for each file. An alternative approach is to create a             collection of documents and pass them to the service in a single call. In both approaches, the response from the service consists of a collection of documents; which is why     in the Python code above, the index of the first (and only) document in the response ([0]) is specified.*
@@ -159,6 +196,12 @@ Now that you have created a client for the Text Analytics API, let's use it to d
     python text-analysis.py
     ```
 
+    **Node.js**
+
+    ```
+    node text-analysis.js
+    ```
+
 7. Observe the output, noting that this time the language for each review is identified.
 
 ## Evaluate sentiment
@@ -169,7 +212,7 @@ Now that you have created a client for the Text Analytics API, let's use it to d
 
     **C#**
     
-    ```C
+    ```c#
     // Get sentiment
     DocumentSentiment sentimentAnalysis = CogClient.AnalyzeSentiment(text);
     Console.WriteLine($"\nSentiment: {sentimentAnalysis.Sentiment}");
@@ -182,6 +225,15 @@ Now that you have created a client for the Text Analytics API, let's use it to d
     sentimentAnalysis = cog_client.analyze_sentiment(documents=[text])[0]
     print("\nSentiment: {}".format(sentimentAnalysis.sentiment))
     ```
+
+    **Node.js**
+
+    ```javascript
+    // Get sentiment
+    var sentimentAnalysis = await client.analyzeSentiment([file.content]);
+    log(`Sentiment: ${sentimentAnalysis[0].sentiment}`)
+    ```
+
 
 2. Save your changes and return to the integrated terminal for the **text-analysis** folder, and enter the following command to run the program:
 
@@ -197,6 +249,11 @@ Now that you have created a client for the Text Analytics API, let's use it to d
     python text-analysis.py
     ```
 
+    **Node.js**
+
+    ```
+    node text-analysis.js
+    ```
 3. Observe the output, noting that the sentiment of the reviews is detected.
 
 ## Identify key phrases
@@ -207,7 +264,7 @@ It can be useful to identify key phrases in a body of text to help determine the
 
     **C#**
 
-    ```C
+    ```c#
     // Get key phrases
     KeyPhraseCollection phrases = CogClient.ExtractKeyPhrases(text);
     if (phrases.Count > 0)
@@ -230,7 +287,17 @@ It can be useful to identify key phrases in a body of text to help determine the
         for phrase in phrases:
             print('\t{}'.format(phrase))
     ```
+    
+    **Node.js**
 
+    ```javascript
+    // Get key phrases
+    var keyPhrases = await client.extractKeyPhrases([file.content])
+    log("Key Phrases:")
+    for(var ph of keyPhrases[0].keyPhrases){
+        log(`\t${ph}`);
+    }
+    ```
 2. Save your changes and return to the integrated terminal for the **text-analysis** folder, and enter the following command to run the program:
 
     **C#**
@@ -244,7 +311,12 @@ It can be useful to identify key phrases in a body of text to help determine the
     ```
     python text-analysis.py
     ```
+    
+    **Node.js**
 
+    ```
+    node text-analysis.js
+    ```
 3. Observe the output, noting that each document contains key phrases that give some insights into what the review is about.
 
 ## Extract entities
@@ -255,7 +327,7 @@ Often, documents or other bodies of text mention people, places, time periods, o
 
     **C#**
     
-    ```C
+    ```c#
     // Get entities
     CategorizedEntityCollection entities = CogClient.RecognizeEntities(text);
     if (entities.Count > 0)
@@ -278,6 +350,17 @@ Often, documents or other bodies of text mention people, places, time periods, o
         for entity in entities:
             print('\t{} ({})'.format(entity.text, entity.category))
     ```
+   
+    **Node.js**
+
+    ```javascript
+    // Get entities
+    var entities = await client.recognizeEntities([file.content]);
+    log("Entities:")
+    for(var entity of entities[0].entities){
+        log(`\t${entity.text} (${entity.category})`);
+    }
+    ```
 
 2. Save your changes and return to the integrated terminal for the **text-analysis** folder, and enter the following command to run the program:
 
@@ -292,6 +375,12 @@ Often, documents or other bodies of text mention people, places, time periods, o
     ```
     python text-analysis.py
     ```
+    
+    **Node.js**
+
+    ```
+    node text-analysis.js
+    ```
 
 3. Observe the output, noting the entities that have been detected in the text.
 
@@ -303,7 +392,7 @@ In addition to categorized entities, the Text Analytics API can detect entities 
 
     **C#**
     
-    ```C
+    ```c#
     // Get linked entities
     LinkedEntityCollection linkedEntities = CogClient.RecognizeLinkedEntities(text);
     if (linkedEntities.Count > 0)
@@ -326,6 +415,17 @@ In addition to categorized entities, the Text Analytics API can detect entities 
         for linked_entity in entities:
             print('\t{} ({})'.format(linked_entity.name, linked_entity.url))
     ```
+    
+    **Node.js**
+
+    ```javascript
+    // Get linked entities
+    var links = await client.recognizeLinkedEntities([file.content]);
+    log("Links:")
+    for(var entity of links[0].entities){
+        log(`\t${entity.name} (${entity.url})`);
+    }
+    ```
 
 2. Save your changes and return to the integrated terminal for the **text-analysis** folder, and enter the following command to run the program:
 
@@ -339,6 +439,12 @@ In addition to categorized entities, the Text Analytics API can detect entities 
     
     ```
     python text-analysis.py
+    ```
+    
+    **Node.js**
+
+    ```
+    node text-analysis.js
     ```
 
 3. Observe the output, noting the linked entities that are identified.
