@@ -42,16 +42,18 @@ In this exercise, you'll complete a partially implemented client application tha
 
 > **Note**: You can choose to use the API from either **C#** or **Python**. In the steps below, perform the actions appropriate for your preferred language.
 
-1. In Visual Studio Code, in the **Explorer** pane, browse to the **06-translate-text** folder and expand the **C-Sharp** or **Python** folder depending on your language preference.
+1. In Visual Studio Code, in the **Explorer** pane, browse to the **06-translate-text** folder and expand the **C-Sharp** or **Python** or **Node.js** folder depending on your language preference.
 2. View the contents of the **text-translation** folder, and note that it contains a file for configuration settings:
     - **C#**: appsettings.json
     - **Python**: .env
+    - **Node.js**: .env
 
     Open the configuration file and update the configuration values it contains to include an authentication **key** for your cognitive services resource, and the **location** where it is deployed (<u>not</u> the endpoint) - you should copy both of these from the **keys and Endpoint** page for your cognitive services resource. Save your changes.
 3. Note that the **text-translation** folder contains a code file for the client application:
 
     - **C#**: Program.cs
     - **Python**: text-translation.py
+    - **Node.js**: text-translation.js
 
     Open the code file and examine the code it contains.
 
@@ -68,6 +70,12 @@ In this exercise, you'll complete a partially implemented client application tha
     
     ```
     python text-translation.py
+    ```
+
+    **Node.js**
+    
+    ```
+    node text-translation.js
     ```
 
 6. Observe the output as the code should run without error, displaying the contents of each review text file in the **reviews** folder. The application currently doesn't make use of the Translator service. We'll fix that in the next procedure.
@@ -139,6 +147,62 @@ response = request.json()
 language = response[0]["language"]
 ```
 
+**Node.js**
+
+```javascript
+// Use the Translator detect function
+return new Promise(resolve => {
+    
+              // Construct the JSON request body (a collection of documents, each with an ID and text)
+              var jsonBody = [{"text": text}];
+      
+              // Let's take a look at the JSON we'll send to the service
+              jsonBody = JSON.stringify(jsonBody, indent=2)
+        
+              // Add the authentication key to the request header
+              var headers = {
+                  'Content-Type': 'application/json',
+                  'Ocp-Apim-Subscription-Region': cog_region,
+                  'Ocp-Apim-Subscription-Key': cog_key
+              }
+    
+              // Use the Text Analytics language API
+              var options = {
+                  host: translator_endpoint,
+                  path: '/detect?api-version=3.0',
+                  method: 'POST',
+                  headers: headers             
+              };
+              
+              // If the call was successful, print the response
+              var callback = function(response) {
+                var content = '';
+                response.setEncoding('utf8');
+    
+                  //another chunk of data has been received, so append it to `str`
+                  response.on('data', function (chunk) {
+                      content += chunk;
+                  });
+              
+                  //the whole response has been received, so we just print it out here
+                  response.on('end', function () {
+                    if (response.statusCode == 200) {
+                      var document = JSON.parse(content);
+                      resolve(document[0].language);
+                    }
+                    else {
+                      // Something went wrong, write the error
+                      throw new Error('Response unsuccessful:' + content);
+                    }
+                  });
+              }
+      
+              var req =  http.request(options, callback);
+              req.write(jsonBody);
+              req.end();
+        });
+```
+
 3. Save your changes and return to the integrated terminal for the **text-translation** folder, and enter the following command to run the program:
 
     **C#**
@@ -151,6 +215,12 @@ language = response[0]["language"]
     
     ```
     python text-translation.py
+    ```
+
+    **Node.js**
+    
+    ```
+    node text-translation.js
     ```
 
 4. Observe the output, noting that this time the language for each review is identified.
@@ -224,6 +294,63 @@ response = request.json()
 translation = response[0]["translations"][0]["text"]
 ```
 
+**Node.js**
+
+```javascript
+ // Use the Translator translate function
+return new Promise(resolve => {
+    
+        // Construct the JSON request body (a collection of documents, each with an ID and text)
+        var jsonBody = [{"text": text}];
+
+        // Let's take a look at the JSON we'll send to the service
+        jsonBody = JSON.stringify(jsonBody, indent=2)
+  
+        // Add the authentication key to the request header
+        var headers = {
+            'Content-Type': 'application/json',
+            'Ocp-Apim-Subscription-Region': cog_region,
+            'Ocp-Apim-Subscription-Key': cog_key
+        }
+
+        // Use the Text Analytics language API
+        var options = {
+            host: translator_endpoint,
+            path: `/translate?api-version=3.0&from=${source_language}&to=en` ,
+            method: 'POST',
+            headers: headers             
+        };
+        
+        // If the call was successful, print the response
+        var callback = function(response) {
+          var content = '';
+          response.setEncoding('utf8');
+
+            //another chunk of data has been received, so append it to `str`
+            response.on('data', function (chunk) {
+                content += chunk;
+            });
+        
+            //the whole response has been received, so we just print it out here
+            response.on('end', function () {
+              if (response.statusCode == 200) {
+                var document = JSON.parse(content);
+                resolve(document[0].translations[0].text);
+              }
+              else {
+                // Something went wrong, write the error
+                throw new Error('Response unsuccessful:' + content);
+              }
+            });
+        }
+
+        var req =  http.request(options, callback);
+        req.write(jsonBody);
+        req.end();
+  });
+```
+
+
 3. Save your changes and return to the integrated terminal for the **text-translation** folder, and enter the following command to run the program:
 
     **C#**
@@ -236,6 +363,12 @@ translation = response[0]["translations"][0]["text"]
     
     ```
     python text-translation.py
+    ```
+    
+    **Node.js**
+    
+    ```
+    node text-translation.js
     ```
 
 4. Observe the output, noting that non-English reviews are translated into English.
