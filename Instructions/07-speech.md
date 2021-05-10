@@ -45,7 +45,7 @@ If you don't already have one in your subscription, you'll need to provision a *
 
 In this exercise, you'll complete a partially implemented client application that uses the Speech SDK to recognize and synthesize speech.
 
-**Note**: You can choose to use the SDK for either **C#** or **Python**. In the steps below, perform the actions appropriate for your preferred language.
+**Note**: You can choose to use the SDK for either **C#** or **Python** or **Nodejs**. In the steps below, perform the actions appropriate for your preferred language.
 
 1. In Visual Studio Code, in the **Explorer** pane, browse to the **07-speech** folder and expand the **C-Sharp** or **Python** folder depending on your language preference.
 2. Right-click the **speaking-clock** folder and open an integrated terminal. Then install the Speech SDK package by running the appropriate command for your language preference:
@@ -62,15 +62,26 @@ In this exercise, you'll complete a partially implemented client application tha
     pip install azure-cognitiveservices-speech==1.14.0
     ```
 
+    **Node.js**
+
+    ```
+    npm install microsoft-cognitiveservices-speech-sdk
+    npm install node-microphone
+    npm install speaker
+    npm install stream
+    ```
+
 3. View the contents of the **speaking-clock** folder, and note that it contains a file for configuration settings:
     - **C#**: appsettings.json
     - **Python**: .env
+    - **Node.js**: .env
 
     Open the configuration file and update the configuration values it contains to include an authentication **key** for your cognitive services resource, and the **location** where it is deployed. Save your changes.
 4. Note that the **speaking-clock** folder contains a code file for the client application:
 
     - **C#**: Program.cs
     - **Python**: speaking-clock.py
+    - **Node.js**: speaking-clock.js
 
     Open the code file and at the top, under the existing namespace references, find the comment **Import namespaces**. Then, under this comment, add the following language-specific code to import the namespaces you will need to use the Speech SDK:
 
@@ -87,6 +98,14 @@ In this exercise, you'll complete a partially implemented client application tha
     ```Python
     # Import namespaces
     import azure.cognitiveservices.speech as speech_sdk
+    ```
+
+    **Node.js**
+    
+    ```javascript
+    // Import namespaces
+    const sdk = require("microsoft-cognitiveservices-speech-sdk");
+    const Mic = require('node-microphone');
     ```
 
 5. In the **Main** function, note that code to load the cognitive services key and region from the configuration file has already been provided. You must use these variables to create a **SpeechConfig** for your cognitive services resource. Add the following code under the comment **Configure speech service**:
@@ -106,6 +125,14 @@ In this exercise, you'll complete a partially implemented client application tha
     speech_config = speech_sdk.SpeechConfig(cog_key, cog_region)
     print('Ready to use speech service in:', speech_config.region)
     ```
+    
+    **Node.js**
+    
+    ```javascript
+    // Configure speech service
+    speech_config = sdk.SpeechConfig.fromSubscription(cog_key, cog_region)
+    log(`Ready to use speech service in:${speech_config.region}`)
+    ```
 
 6. Save your changes and return to the integrated terminal for the **speaking-clock** folder, and enter the following command to run the program:
 
@@ -119,6 +146,12 @@ In this exercise, you'll complete a partially implemented client application tha
     
     ```
     python speaking-clock.py
+    ```
+
+    **Node.js**
+    
+    ```
+    node speaking-clock.js
     ```
 
 7. If you are using C#, you can ignore any warnings about using the **await** operator in asynchronous methods - we'll fix that later. The code should display the region of the speech service resource the application will use.
@@ -150,6 +183,29 @@ Now that you have a **SpeechConfig** for the speech service in your cognitive se
     print('Speak now...')
     ```
 
+    **Node.js**
+    
+    ```javascript
+    // Configure speech recognition
+    const mic = new Mic({rate: 8000, bitwidth : 8});
+    const micStream = mic.startRecording();
+
+    micStream.on('data', d => pushStream.write(d.slice()));
+    micStream.on('end', () => {
+        pushStream.close();
+    });
+            
+    setTimeout(function () {
+        mic.stopRecording(); // Stop recording after 5sec
+    }, 5000)
+            
+    var pushStream = sdk.AudioInputStream.createPushStream()
+    var audioConfig = sdk.AudioConfig.fromStreamInput(pushStream);
+    speech_config.speechRecognitionLanguage = "en-US";
+    var recognizer = new sdk.SpeechRecognizer(speech_config, audioConfig);
+    log('Speak now...')
+    ```
+
 3. Now skip ahead to the **Add code to process the transcribed command** section below.
 
 ### Alternatively, use audio input from a file
@@ -168,6 +224,13 @@ Now that you have a **SpeechConfig** for the speech service in your cognitive se
     pip install playsound==1.2.2
     ```
 
+    **Node.js**
+
+    ```
+    npm install fs
+    ```
+
+
 2. In the code file for your program, under the existing namespace imports, add the following code to import the library you just installed:
 
     **C#**
@@ -180,6 +243,12 @@ Now that you have a **SpeechConfig** for the speech service in your cognitive se
 
     ```Python
     from playsound import playsound
+    ```
+   
+    **Node.js**
+
+    ```javascript
+    const fs = require("fs");
     ```
 
 3. In the **Main** function, note that the code uses the **TranscribeCommand** function to accept spoken input. Then in the **TranscribeCommand** function, under the comment **Configure speech recognition**, add the appropriate code below to create a **SpeechRecognizer** client that can be used to recognize and transcribe speech from an audio file:
@@ -203,6 +272,25 @@ Now that you have a **SpeechConfig** for the speech service in your cognitive se
     playsound(audioFile)
     audio_config = speech_sdk.AudioConfig(filename=audioFile)
     speech_recognizer = speech_sdk.SpeechRecognizer(speech_config, audio_config)
+    ```
+    
+    **Node.js**
+
+    ```javascript
+    // Configure speech recognition
+    var filename = "time.wav"; 
+    var pushStream = sdk.AudioInputStream.createPushStream();
+
+    fs.createReadStream(filename).on('data', function(arrayBuffer) {
+        pushStream.write(arrayBuffer.slice());
+    }).on('end', function() {
+        pushStream.close();
+    });
+            
+    var audioConfig = sdk.AudioConfig.fromStreamInput(pushStream);
+    var speechConfig = sdk.SpeechConfig.fromSubscription(cog_key, cog_region);
+    speechConfig.speechRecognitionLanguage = "en-US";
+    var recognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
     ```
 
 ### Add code to process the transcribed command
@@ -247,6 +335,31 @@ Now that you have a **SpeechConfig** for the speech service in your cognitive se
             print(cancellation.error_details)
     ```
 
+    **Node.js**
+    
+    ```javascript
+    // Process speech input
+    recognizer.recognizeOnceAsync(
+        function (result) {
+            var document = JSON.parse(result.privJson);
+            if (document.RecognitionStatus=='Success') {
+                command = document.DisplayText;
+                log(`>${command}`);
+                resolve(command);                        
+            } else {
+                log(`RecognitionStatus: ${document.RecognitionStatus}`)
+                resolve('');
+            }
+            recognizer.close();
+            recognizer = undefined;
+            },
+            function (err) {
+                console.trace("err - " + err);
+                recognizer.close();
+                recognizer = undefined;
+            });
+    ```
+
 2. Save your changes and return to the integrated terminal for the **speaking-clock** folder, and enter the following command to run the program:
 
     **C#**
@@ -259,6 +372,12 @@ Now that you have a **SpeechConfig** for the speech service in your cognitive se
     
     ```
     python speaking-clock.py
+    ```
+
+    **Node.js**
+    
+    ```
+    node speaking-clock.js
     ```
 
 3. If using a microphone, speak clearly and say "what time is it?". The program should transcribe your spoken input and display the time (based on the local time of the computer where the code is running, which may not be the correct time where you are).
@@ -287,8 +406,22 @@ Your speaking clock application accepts spoken input, but it doesn't actually sp
     # Configure speech synthesis
     speech_synthesizer = speech_sdk.SpeechSynthesizer(speech_config)
     ```
+
+       > **Note**: *The default audio configuration uses the default system audio device for output, so you don't need to explicitly provide an **AudioConfig**. If you need to     redirect     audio output to a file, you can use an **AudioConfig** with a filepath to do so.*
+
+    **Node.js**
     
-    > **Note**: *The default audio configuration uses the default system audio device for output, so you don't need to explicitly provide an **AudioConfig**. If you need to     redirect     audio output to a file, you can use an **AudioConfig** with a filepath to do so.*
+    ```javascript
+    // Configure speech synthesis
+    var speechConfig = sdk.SpeechConfig.fromSubscription(cog_key, cog_region);
+    var pstream = sdk.AudioOutputStream.createPullStream();
+    var synaudioConfig = sdk.AudioConfig.fromStreamOutput(pstream);
+    var synthesizer = new sdk.SpeechSynthesizer(speechConfig, synaudioConfig);
+    var speaker = new Speaker({ channels: 1, sampleRate: 16000, bitDepth: 16 });
+  
+    ```   
+
+
 
 3. In the **TellTime** function, under the comment **Synthesize spoken output**, add the following code to generate spoken output, being careful not to replace the code at the end of the function that prints the response:
 
@@ -312,6 +445,26 @@ Your speaking clock application accepts spoken input, but it doesn't actually sp
         print(speak.reason)
     ```
 
+    **Node.js**
+    
+    ```javascript
+    // Synthesize spoken output
+    synthesizer.speakTextAsync(
+        response_text,
+        result => {
+            if (result) {
+                synthesizer.close();
+                let bufferStream = new stream.PassThrough();
+                bufferStream.end(Buffer.from(result.audioData));
+                bufferStream.pipe(speaker);
+            }
+        },
+        error => {
+            console.log(error);
+            synthesizer.close();
+        });
+    ```
+
 4. Save your changes and return to the integrated terminal for the **speaking-clock** folder, and enter the following command to run the program:
 
     **C#**
@@ -324,6 +477,12 @@ Your speaking clock application accepts spoken input, but it doesn't actually sp
     
     ```
     python speaking-clock.py
+    ```
+
+    **Node.js**
+    
+    ```
+    node speaking-clock.js
     ```
 
 5. When prompted, speak clearly into the microphone and say "what time is it?". The program should speak, telling you the time.
@@ -352,6 +511,14 @@ Your speaking clock application uses a default voice, which you can change. The 
     speech_synthesizer = speech_sdk.SpeechSynthesizer(speech_config)
     ```
 
+    **Node.js**
+
+    ```javascript
+    // Configure speech synthesis
+    speechConfig.speechSynthesisVoiceName = "en-GB-George"; // add this
+    var synthesizer = new sdk.SpeechSynthesizer(speechConfig, synaudioConfig);
+    ```
+
 2. Save your changes and return to the integrated terminal for the **speaking-clock** folder, and enter the following command to run the program:
 
     **C#**
@@ -364,6 +531,12 @@ Your speaking clock application uses a default voice, which you can change. The 
     
     ```
     python speaking-clock.py
+    ```
+
+    **Node.js**
+    
+    ```
+    node speaking-clock.js
     ```
 
 3. When prompted, speak clearly into the microphone and say "what time is it?". The program should speak in the specified voice, telling you the time.
@@ -410,6 +583,34 @@ Speech Synthesis Markup Language (SSML) enables you to customize the way your sp
         print(speak.reason)
     ```
 
+    **Node.js**
+    
+    ```javascript
+    // Synthesize spoken output
+    response_text = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>
+            <voice name='en-GB-Susan'>
+                ${response_text}
+                <break strength='weak'/>
+                Time to end this lab!
+            </voice>
+        </speak>`;
+
+    synthesizer.speakSsmlAsync(
+        response_text,
+        result => {
+            if (result) {
+                synthesizer.close();
+                let bufferStream = new stream.PassThrough();
+                bufferStream.end(Buffer.from(result.audioData));
+                bufferStream.pipe(speaker);
+            }
+        },
+        error => {
+            console.log(error);
+            synthesizer.close();
+        }); 
+    ```
+
 2. Save your changes and return to the integrated terminal for the **speaking-clock** folder, and enter the following command to run the program:
 
     **C#**
@@ -422,6 +623,12 @@ Speech Synthesis Markup Language (SSML) enables you to customize the way your sp
     
     ```
     python speaking-clock.py
+    ```
+
+    **Node.js**
+    
+    ```
+    node speaking-clock.js
     ```
 
 3. When prompted, speak clearly into the microphone and say "what time is it?". The program should speak in the voice that is specified in the SSML (overriding the voice specified in the SpeechConfig), telling you the time, and then after a pause telling you it's time to end this lab - which it is!
