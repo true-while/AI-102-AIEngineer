@@ -40,9 +40,9 @@ If you don't already have on in your subscription, you'll need to provision a **
 
 In this exercise, you'll complete a partially implemented client application that uses the Speech SDK to recognize, translate, and synthesize speech.
 
-> **Note**: You can choose to use the SDK for either **C#** or **Python**. In the steps below, perform the actions appropriate for your preferred language.
+> **Note**: You can choose to use the SDK for either **C#** or **Python** or **Node.js**. In the steps below, perform the actions appropriate for your preferred language.
 
-1. In Visual Studio Code, in the **Explorer** pane, browse to the **08-speech-translation** folder and expand the **C-Sharp** or **Python** folder depending on your language preference.
+1. In Visual Studio Code, in the **Explorer** pane, browse to the **08-speech-translation** folder and expand the **C-Sharp** or **Python** or **Node.js** folder depending on your language preference.
 2. Right-click the **translator** folder and open an integrated terminal. Then install the Speech SDK package by running the appropriate command for your language preference:
 
     **C#**
@@ -57,15 +57,25 @@ In this exercise, you'll complete a partially implemented client application tha
     pip install azure-cognitiveservices-speech==1.14.0
     ```
 
+    **Node.js**
+    
+    ```
+    npm install microsoft-cognitiveservices-speech-sdk
+    npm install speaker
+    ```
+
 3. View the contents of the **translator** folder, and note that it contains a file for configuration settings:
+
     - **C#**: appsettings.json
     - **Python**: .env
+    - **Node.js**: .env
 
     Open the configuration file and update the configuration values it contains to include an authentication **key** for your cognitive services resource, and the **location** where it is deployed. Save your changes.
 4. Note that the **translator** folder contains a code file for the client application:
 
     - **C#**: Program.cs
     - **Python**: translator.py
+    - **Node.js**: translator.js
 
     Open the code file and at the top, under the existing namespace references, find the comment **Import namespaces**. Then, under this comment, add the following language-specific code to import the namespaces you will need to use the Speech SDK:
 
@@ -83,6 +93,15 @@ In this exercise, you'll complete a partially implemented client application tha
     ```Python
     # Import namespaces
     import azure.cognitiveservices.speech as speech_sdk
+    ```
+
+    **Node.js**
+
+    ```javascript
+    //Import namespaces
+    const Mic = require('node-microphone');
+    const sdk = require('microsoft-cognitiveservices-speech-sdk');
+    const Speaker = require('speaker');
     ```
 
 5. In the **Main** function, note that code to load the cognitive services key and region from the configuration file has already been provided. You must use these variables to create a **SpeechTranslationConfig** for your cognitive services resource, which you will use to translate spoken input. Add the following code under the comment **Configure translation**:
@@ -111,6 +130,19 @@ In this exercise, you'll complete a partially implemented client application tha
     print('Ready to translate from',translation_config.speech_recognition_language)
     ```
 
+    **Node.js**
+    ```javascript
+    // Configure translation
+    sTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(cog_key, cog_region);
+        
+    sTranslationConfig.speechRecognitionLanguage = "en-US";
+    sTranslationConfig.addTargetLanguage("es");
+    sTranslationConfig.addTargetLanguage("hi");
+    sTranslationConfig.addTargetLanguage("de");
+    log('Ready to translate from ' + sTranslationConfig.speechRecognitionLanguage);
+     ```
+
+
 6. You will use the **SpeechTranslationConfig** to translate speech into text, but you will also use a **SpeechConfig** to synthesize translations into speech. Add the following code under the comment **Configure speech**:
 
     **C#**
@@ -126,6 +158,12 @@ In this exercise, you'll complete a partially implemented client application tha
     # Configure speech
     speech_config = speech_sdk.SpeechConfig(cog_key, cog_region)
     ```
+    **Node.js**
+
+    ```javascript
+    // Configure speech
+    speechConfig = sdk.SpeechConfig.fromSubscription(cog_key, cog_region)
+    ```
 
 7. Save your changes and return to the integrated terminal for the **translator** folder, and enter the following command to run the program:
 
@@ -139,6 +177,12 @@ In this exercise, you'll complete a partially implemented client application tha
     
     ```
     python translator.py
+    ```
+    
+    **Node.js**
+    
+    ```
+    node translator.js
     ```
 
 8. If you are using C#, you can ignore any warnings about using the **await** operator in asynchronous methods - we'll fix that later. The code should display a message that it is ready to translate from en-US. Press ENTER to end the program.
@@ -179,6 +223,38 @@ Now that you have a **SpeechTranslationConfig** for the speech service in your c
     print(translation)
     ```
 
+    ```javascript
+    // Translate speech
+    const mic = new Mic({rate: 8000, bitwidth : 8});
+    const micStream = mic.startRecording();
+    
+    micStream.on('data', d => pushStream.write(d.slice()));
+    micStream.on('end', () => {
+        pushStream.close();
+    });
+                    
+    setTimeout(function () {
+        mic.stopRecording(); // Stop recording after 5sec
+    }, 5000)
+                    
+    var pushStream = sdk.AudioInputStream.createPushStream();
+    var audioConfig = sdk.AudioConfig.fromStreamInput(pushStream);
+    var translator = new sdk.TranslationRecognizer(sTranslationConfig, audioConfig);
+    log('Speak now...');
+
+    translator.recognizeOnceAsync(
+            function (result) {
+                  log(`Translating: "${result.text}"`);
+                  var translation = result.translations.get(targetLanguage);
+                  resolve(translation);
+                  translator.close();
+            },
+            function (err) {
+                  log(err);
+                  translator.close();
+            });
+    ```
+
     > **Note**: The code in your application translates the input to all three languages in a single call. Only the translation for the specific language is displayed, but you could retrieve any of the translations by specifying the target language code in the **translations** collection of the result.
 
 3. Now skip ahead to the **Run the program** section below.
@@ -199,6 +275,13 @@ Now that you have a **SpeechTranslationConfig** for the speech service in your c
     pip install playsound==1.2.2
     ```
 
+    **Node.js**
+
+    ```
+    npm install fs
+    ```
+
+
 2. In the code file for your program, under the existing namespace imports, add the following code to import the library you just installed:
 
     **C#**
@@ -211,6 +294,12 @@ Now that you have a **SpeechTranslationConfig** for the speech service in your c
 
     ```Python
     from playsound import playsound
+    ```
+
+    **Node.js**
+
+    ```javascript
+    const fs = require("fs");
     ```
 
 3. In the **Main** function for your program, note that the code uses the **Translate** function to translate spoken input. Then in the **Translate** function, under the comment **Translate speech**, add the following code to create a **TranslationRecognizer** client that can be used to recognize and translate speech from a file.
@@ -247,6 +336,37 @@ Now that you have a **SpeechTranslationConfig** for the speech service in your c
     print(translation)
     ```
 
+    **Node.js**
+
+    ```javascript
+    // Translate speech
+    var filename = "station.wav"; 
+    var pushStream = sdk.AudioInputStream.createPushStream();
+        
+    fs.createReadStream(filename).on('data', function(arrayBuffer) {
+        pushStream.write(arrayBuffer.slice());
+    }).on('end', function() {
+        pushStream.close();
+    });
+            
+    var audioConfig = sdk.AudioConfig.fromStreamInput(pushStream);
+    var translator = new sdk.TranslationRecognizer(sTranslationConfig, audioConfig);
+    log("Getting speech from file...")
+
+    translator.recognizeOnceAsync(
+        function (result) {
+            log(`Translating: "${result.text}"`);
+            var translation = result.translations.get(targetLanguage);
+            resolve(translation);
+            translator.close();
+        },
+        function (err) {
+            log(err);
+            translator.close();
+        });
+    ```
+
+
     > **Note**: The code in your application translates the input to all three languages in a single call. Only the translation for the specific language is displayed, but you could retrieve any of the translations by specifying the target language code in the **translations** collection of the result.
 
 ### Run the program
@@ -263,6 +383,12 @@ Now that you have a **SpeechTranslationConfig** for the speech service in your c
     
     ```
     python translator.py
+    ```
+
+    **Node.js**
+    
+    ```
+    node translator.js
     ```
 
 2. When prompted, enter a valid language code (*fr*, *es*, or *hi*), and then, if using a microphone, speak clearly and say "where is the station?" or some other phrase you might use when traveling abroad. The program should transcribe your spoken input and translate it to the language you specified (French, Spanish, or Hindi). Repeat this process, trying each language supported by the application. When you're finished, press ENTER to end the program.
@@ -312,6 +438,40 @@ So far, your application translates spoken input to text; which might be suffici
         print(speak.reason)
     ```
 
+    **Node.js**
+    
+    ```javascript
+    // Configure speech synthesis
+    var voices = {
+            "fr": "fr-FR-Julie",
+            "es": "es-ES-Laura",
+            "hi": "hi-IN-Kalpana"
+        };
+
+        var pstream = sdk.AudioOutputStream.createPullStream();
+        var synaudioConfig = sdk.AudioConfig.fromStreamOutput(pstream);
+        var speaker = new Speaker({ channels: 1, sampleRate: 16000, bitDepth: 16 });
+ 
+        speechConfig.speechSynthesisVoiceName = voices[targetLanguage]; 
+        var synthesizer = new sdk.SpeechSynthesizer(speechConfig, synaudioConfig);
+    
+        synthesizer.speakTextAsync(
+                toSynthesize,
+                result => {
+                    if (result) {
+                        synthesizer.close();
+                        let bufferStream = new stream.PassThrough();
+                        bufferStream.end(Buffer.from(result.audioData));
+                        bufferStream.pipe(speaker);
+                        resolve(result.reason);
+                    }
+                },
+                error => {
+                    console.log(error);
+                    synthesizer.close();
+                });
+    ```   
+
 2. Save your changes and return to the integrated terminal for the **translator** folder, and enter the following command to run the program:
 
     **C#**
@@ -324,6 +484,12 @@ So far, your application translates spoken input to text; which might be suffici
     
     ```
     python translator.py
+    ```
+
+    **Node.js**
+    
+    ```
+    node translator.js
     ```
 
 3. When prompted, enter a valid language code (*fr*, *es*, or *hi*), and then speak clearly into the microphone and say a phrase you might use when traveling abroad. The program should transcribe your spoken input and respond with a spoken translation. Repeat this process, trying each language supported by the application. When you're finished, press ENTER to end the program.

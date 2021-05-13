@@ -2,7 +2,7 @@
   "name": "Node.js",
   "version": "1.0.0",
   "description": "",
-  "main": "speaking-clock.js",
+  "main": "translator.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,6 +12,9 @@
   "dependencies": {
     "dotenv": "^9.0.0",
     "fs": "*",
-    "path": "^0.12.7"
+    "microsoft-cognitiveservices-speech-sdk": "^1.16.0",
+    "node-microphone": "^0.1.5",
+    "path": "^0.12.7",
+    "speaker": "^0.5.3"
   }
 }

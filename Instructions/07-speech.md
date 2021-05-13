@@ -108,6 +108,8 @@ In this exercise, you'll complete a partially implemented client application tha
     const Mic = require('node-microphone');
     ```
 
+
+
 5. In the **Main** function, note that code to load the cognitive services key and region from the configuration file has already been provided. You must use these variables to create a **SpeechConfig** for your cognitive services resource. Add the following code under the comment **Configure speech service**:
 
     **C#**
