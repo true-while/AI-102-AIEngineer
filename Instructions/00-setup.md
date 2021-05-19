@@ -42,7 +42,7 @@ npm install -g dotenv path readline https fs
 npm link dotenv path readline https fs
 ```
 
-1. Download and install SOX for Windows http://sox.sourceforge.net/
+4. Download and install SOX for Windows http://sox.sourceforge.net/. Add location ('C:\Program Files (x86)\sox-14-4-2') to the Path system variables. 
 
 ### Python (and required packages)
 
