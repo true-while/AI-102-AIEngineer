@@ -34,7 +34,7 @@ Install [Edge (Chromium)](https://microsoft.com/edge)
 2. Install using the default options package globally
 
 ```
-npm install -g dotenv, path, readline, https, fs
+npm install -g dotenv path readline https fs
 ```
 3. Run following command fore each NEW project to link globally installed packages from the folder of your project:
 
