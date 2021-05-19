@@ -383,12 +383,12 @@ Now you're ready to implement code that uses the Speech SDK to get a predicted i
 
     **Node.js**
     ```javascript
-         // Process speech input
-        recognizer.recognizeOnceAsync(
-            function (result) {
-              var intent = ''
-              log("(continuation) Reason: " + sdk.ResultReason[result.reason]);
-              switch (result.reason) {
+    // Process speech input
+    recognizer.recognizeOnceAsync(
+        function (result) {
+            var intent = ''
+            log("(continuation) Reason: " + sdk.ResultReason[result.reason]);
+            switch (result.reason) {
                 case sdk.ResultReason.RecognizedSpeech:
                     // Speech was recognized, but no intent was identified.
                     intent = result.text;
@@ -422,8 +422,8 @@ Now you're ready to implement code that uses the Speech SDK to get a predicted i
                         log(cancelDetails.errorDetails);
                     }
               break;
-              }
-            }); 
+        }
+    }); 
     ```
 
 
