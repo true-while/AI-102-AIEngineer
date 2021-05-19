@@ -42,6 +42,8 @@ npm install -g dotenv path readline https fs
 npm link dotenv path readline https fs
 ```
 
+1. Download and install SOX for Windows http://sox.sourceforge.net/
+
 ### Python (and required packages)
 
 1. Download version 3.8 from https://docs.conda.io/en/latest/miniconda.html 
