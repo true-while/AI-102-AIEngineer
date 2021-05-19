@@ -63,10 +63,11 @@ In this exercise, you'll create a client application that accepts spoken input a
 
 > **Note**: You can choose to use the SDK for either **C#** or **Python** in this exercise. In the steps that follow, perform the actions appropriate for your preferred language.
 
-1. In Visual Studio Code, in the **Explorer** pane, browse to the **11-luis-speech** folder and expand the **C-Sharp** or **Python** folder depending on your language preference.
+1. In Visual Studio Code, in the **Explorer** pane, browse to the **11-luis-speech** folder and expand the **C-Sharp** or **Python** or **Node.js** folder depending on your language preference.
 2. View the contents of the **speaking-clock-client** folder, and note that it contains a file for configuration settings:
     - **C#**: appsettings.json
     - **Python**: .env
+    - **Node.js**: .env
 
     Open the configuration file and update the configuration values it contains to include the **App ID** for your Language Understanding app, and the **Location** (<u>not</u> the full endpoint - for example, *eastus*) and one of the **Keys** for its prediction resource (from the **Manage** page for your app in the Language Understanding portal).
 
@@ -88,6 +89,13 @@ To use the Speech SDK with the Language Understanding service, you need to insta
     pip install azure-cognitiveservices-speech==1.14.0
     ```
 
+    **Node.js**
+    
+    ```
+    npm install microsoft-cognitiveservices-speech-sdk
+    npm install speaker
+    ```
+
 2. Additionally, if your system does <u>not</u> have a working microphone, you will need to use an audio file to provide spoken input for your application. In this case, use the following commands to install an additional package so your program can play the audio file (you can skip this if you intend to use a microphone):
 
     **C#**
@@ -106,6 +114,7 @@ To use the Speech SDK with the Language Understanding service, you need to insta
 
     - **C#**: Program.cs
     - **Python**: speaking-clock-client.py
+    - **Node.js**: speaking-clock-client.js
 
 4. Open the code file and at the top, under the existing namespace references, find the comment **Import namespaces**. Then, under this comment, add the following language-specific code to import the namespaces you will need to use the Speech SDK:
 
@@ -125,6 +134,15 @@ To use the Speech SDK with the Language Understanding service, you need to insta
     import azure.cognitiveservices.speech as speech_sdk
     ```
 
+    **Node.js**
+
+    ```javascript
+    //Import namespaces
+    const Mic = require('node-microphone');
+    const sdk = require('microsoft-cognitiveservices-speech-sdk');
+    const Speaker = require('speaker');
+    ```
+
 5. Additionally, if your system does <u>not</u> have a working microphone, under the existing namespace imports, add the following code to import the library you will use to play an audio file:
 
     **C#**
@@ -137,6 +155,11 @@ To use the Speech SDK with the Language Understanding service, you need to insta
 
     ```Python
     from playsound import playsound
+    ```
+
+    **Node.js**
+    ```javascript
+    const fs = require("fs");
     ```
 
 ## Create an *IntentRecognizer*
@@ -164,6 +187,31 @@ The **IntentRecognizer** class provides a client object that you can use to get 
     audio_config = speech_sdk.AudioConfig(use_default_microphone=True)
     recognizer = speech_sdk.intent.IntentRecognizer(speech_config, audio_config)
     ```
+    
+    
+    **Node.js**
+
+    ```javascript
+    // Configure speech service and get intent recognizer
+    const mic = new Mic({rate: 8000, bitwidth : 8});
+    const micStream = mic.startRecording();
+
+    micStream.on('data', d => pushStream.write(d.slice()));
+    micStream.on('end', () => {
+        pushStream.close();
+    });
+            
+    setTimeout(function () {
+        mic.stopRecording(); // Stop recording after 5sec
+    }, 5000)
+            
+    var pushStream = sdk.AudioInputStream.createPushStream()
+    var audioConfig = sdk.AudioConfig.fromStreamInput(pushStream);
+    speech_config = sdk.SpeechConfig.fromSubscription(lu_prediction_key, lu_prediction_region)
+    speech_config.speechRecognitionLanguage = "en-US";
+    var recognizer = new sdk.IntentRecognizer(speech_config, audioConfig);
+    ```
+
 
     ### **If you need to use an audio file:**
 
@@ -189,6 +237,26 @@ The **IntentRecognizer** class provides a client object that you can use to get 
     speech_config = speech_sdk.SpeechConfig(subscription=lu_prediction_key, region=lu_prediction_region)
     audio_config = speech_sdk.AudioConfig(filename=audioFile)
     recognizer = speech_sdk.intent.IntentRecognizer(speech_config, audio_config)
+    ```
+
+    **Node.js**
+
+    ```javascript
+    // Configure speech recognition
+    var filename = 'time-in-london.wav'; 
+    var pushStream = sdk.AudioInputStream.createPushStream();
+
+    fs.createReadStream(filename).on('data', function(arrayBuffer) {
+        pushStream.write(arrayBuffer.slice());
+    }).on('end', function() {
+        pushStream.close();
+    });
+                
+    var pushStream = sdk.AudioInputStream.createPushStream()
+    var audioConfig = sdk.AudioConfig.fromStreamInput(pushStream);
+    speech_config = sdk.SpeechConfig.fromSubscription(lu_prediction_key, lu_prediction_region)
+    speech_config.speechRecognitionLanguage = "en-US";
+    var recognizer = new sdk.IntentRecognizer(speech_config, audioConfig);
     ```
 
 ## Get a predicted intent from spoken input
@@ -224,213 +292,322 @@ Now you're ready to implement code that uses the Speech SDK to get a predicted i
     recognizer.add_intents(intents)
     ```
 
+    **Node.js**
+
+    ```javascript
+    // Get the model from the AppID and add the intents we want to use
+    var model = sdk.LanguageUnderstandingModel.fromAppId(lu_app_id);
+    recognizer.addIntent(model, "GetTime");
+    recognizer.addIntent(model, "GetDate");
+    recognizer.addIntent(model, "GetDay");
+    recognizer.addIntent(model, "None");
+    recognizer.addAllIntents(model);
+    ```
+
 2. Under the comment **Process speech input**, add the following code, which uses the recognizer to asynchronously call the Language Understanding service with spoken input, and retrieve response. If the response includes a predicted intent, the spoken query, predicted intent, and full JSON response are displayed. Otherwise the code handles the response based on the reason returned.
 
-**C#**
+    **C#**
 
-```C
-// Process speech input
-string intent = "";
-var result = await recognizer.RecognizeOnceAsync().ConfigureAwait(false);
-if (result.Reason == ResultReason.RecognizedIntent)
-{
-    // Intent was identified
-    intent = result.IntentId;
-    Console.WriteLine($"Query: {result.Text}");
-    Console.WriteLine($"Intent Id: {intent}.");
-    string jsonResponse = result.Properties.GetProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult);
-    Console.WriteLine($"JSON Response:\n{jsonResponse}\n");
-    
-    // Get the first entity (if any)
-
-    // Apply the appropriate action
-    
-}
-else if (result.Reason == ResultReason.RecognizedSpeech)
-{
-    // Speech was recognized, but no intent was identified.
-    intent = result.Text;
-    Console.Write($"I don't know what {intent} means.");
-}
-else if (result.Reason == ResultReason.NoMatch)
-{
-    // Speech wasn't recognized
-    Console.WriteLine($"Sorry. I didn't understand that.");
-}
-else if (result.Reason == ResultReason.Canceled)
-{
-    // Something went wrong
-    var cancellation = CancellationDetails.FromResult(result);
-    Console.WriteLine($"CANCELED: Reason={cancellation.Reason}");
-    if (cancellation.Reason == CancellationReason.Error)
+    ```C#
+    // Process speech input
+    string intent = "";
+    var result = await recognizer.RecognizeOnceAsync().ConfigureAwait(false);
+    if (result.Reason == ResultReason.RecognizedIntent)
     {
-        Console.WriteLine($"CANCELED: ErrorCode={cancellation.ErrorCode}");
-        Console.WriteLine($"CANCELED: ErrorDetails={cancellation.ErrorDetails}");
+        // Intent was identified
+        intent = result.IntentId;
+        Console.WriteLine($"Query: {result.Text}");
+        Console.WriteLine($"Intent Id: {intent}.");
+        string jsonResponse = result.Properties.GetProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult);
+        Console.WriteLine($"JSON Response:\n{jsonResponse}\n");
+        
+        // Get the first entity (if any)
+
+        // Apply the appropriate action
+        
     }
-}
-```
+    else if (result.Reason == ResultReason.RecognizedSpeech)
+    {
+        // Speech was recognized, but no intent was identified.
+        intent = result.Text;
+        Console.Write($"I don't know what {intent} means.");
+    }
+    else if (result.Reason == ResultReason.NoMatch)
+    {
+        // Speech wasn't recognized
+        Console.WriteLine($"Sorry. I didn't understand that.");
+    }
+    else if (result.Reason == ResultReason.Canceled)
+    {
+        // Something went wrong
+        var cancellation = CancellationDetails.FromResult(result);
+        Console.WriteLine($"CANCELED: Reason={cancellation.Reason}");
+        if (cancellation.Reason == CancellationReason.Error)
+        {
+            Console.WriteLine($"CANCELED: ErrorCode={cancellation.ErrorCode}");
+            Console.WriteLine($"CANCELED: ErrorDetails={cancellation.ErrorDetails}");
+        }
+    }
+    ```
 
-**Python**
+    **Python**
 
-```Python
-# Process speech input
-intent = ''
-result = recognizer.recognize_once_async().get()
-if result.reason == speech_sdk.ResultReason.RecognizedIntent:
-    intent = result.intent_id
-    print("Query: {}".format(result.text))
-    print("Intent: {}".format(intent))
-    json_response = json.loads(result.intent_json)
-    print("JSON Response:\n{}\n".format(json.dumps(json_response, indent=2)))
-    
-    # Get the first entity (if any)
-    
-    # Apply the appropriate action
-    
-elif result.reason == speech_sdk.ResultReason.RecognizedSpeech:
-    # Speech was recognized, but no intent was identified.
-    intent = result.text
-    print("I don't know what {} means.".format(intent))
-elif result.reason == speech_sdk.ResultReason.NoMatch:
-    # Speech wasn't recognized
-    print("Sorry. I didn't understand that.")
-elif result.reason == speech_sdk.ResultReason.Canceled:
-    # Something went wrong
-    print("Intent recognition canceled: {}".format(result.cancellation_details.reason))
-    if result.cancellation_details.reason == speech_sdk.CancellationReason.Error:
-        print("Error details: {}".format(result.cancellation_details.error_details))
-```
+    ```Python
+    # Process speech input
+    intent = ''
+    result = recognizer.recognize_once_async().get()
+    if result.reason == speech_sdk.ResultReason.RecognizedIntent:
+        intent = result.intent_id
+        print("Query: {}".format(result.text))
+        print("Intent: {}".format(intent))
+        json_response = json.loads(result.intent_json)
+        print("JSON Response:\n{}\n".format(json.dumps(json_response, indent=2)))
+        
+        # Get the first entity (if any)
+        
+        # Apply the appropriate action
+        
+    elif result.reason == speech_sdk.ResultReason.RecognizedSpeech:
+        # Speech was recognized, but no intent was identified.
+        intent = result.text
+        print("I don't know what {} means.".format(intent))
+    elif result.reason == speech_sdk.ResultReason.NoMatch:
+        # Speech wasn't recognized
+        print("Sorry. I didn't understand that.")
+    elif result.reason == speech_sdk.ResultReason.Canceled:
+        # Something went wrong
+        print("Intent recognition canceled: {}".format(result.cancellation_details.reason))
+        if result.cancellation_details.reason == speech_sdk.CancellationReason.Error:
+            print("Error details: {}".format(result.cancellation_details.error_details))
+    ```
+
+    **Node.js**
+    ```javascript
+         // Process speech input
+        recognizer.recognizeOnceAsync(
+            function (result) {
+              var intent = ''
+              log("(continuation) Reason: " + sdk.ResultReason[result.reason]);
+              switch (result.reason) {
+                case sdk.ResultReason.RecognizedSpeech:
+                    // Speech was recognized, but no intent was identified.
+                    intent = result.text;
+                    log(`I don't know what ${intent} means.`);
+                    break;
+                case sdk.ResultReason.RecognizedIntent:
+                    intent = result.intentId;
+                    log(`Query: ${result.text}`);
+                    log(`Intent: ${result.intentId}`);
+                    var jsonBody = result.properties.getProperty(sdk.PropertyId.LanguageUnderstandingServiceResponse_JsonResult)
+                    json = JSON.parse(jsonBody);
+                    log(`JSON Response:\n${jsonBody}\n`)
+                    var entity_value = ''
+                    var entity_type = ''
+
+                    // Get the first entity (if any)
+                
+                    // Apply the appropriate action
+                   
+
+                    break;
+                case sdk.ResultReason.NoMatch:
+                    // Speech wasn't recognized
+                    log("Sorry. I didn't understand that.");
+                    break;
+                case sdk.ResultReason.Canceled:
+                    // Something went wrong
+                    var cancelDetails = sdk.CancellationDetails.fromResult(result);
+                    log(`Intent recognition canceled: ${sdk.CancellationReason[cancelDetails.reason]}`);
+                    if (cancelDetails.reason === sdk.CancellationReason.Error) {
+                        log(cancelDetails.errorDetails);
+                    }
+              break;
+              }
+            }); 
+    ```
+
 
 The code you've added so far identifies the *intent*, but some intents can reference *entities*, so you must add code to extract the entity information from the JSON returned by the service.
 
 3. In the code you just added, find the comment **Get the first entity (if any)** and add the following code beneath it:
 
-**C#**
+    **C#**
 
-```C
-// Get the first entity (if any)
-JObject jsonResults = JObject.Parse(jsonResponse);
-string entityType = "";
-string entityValue = "";
-if (jsonResults["entities"].HasValues)
-{
-    JArray entities = new JArray(jsonResults["entities"][0]);
-    entityType = entities[0]["type"].ToString();
-    entityValue = entities[0]["entity"].ToString();
-    Console.WriteLine(entityType + ": " + entityValue);
-}
-```
+    ```C#
+    // Get the first entity (if any)
+    JObject jsonResults = JObject.Parse(jsonResponse);
+    string entityType = "";
+    string entityValue = "";
+    if (jsonResults["entities"].HasValues)
+    {
+        JArray entities = new JArray(jsonResults["entities"][0]);
+        entityType = entities[0]["type"].ToString();
+        entityValue = entities[0]["entity"].ToString();
+        Console.WriteLine(entityType + ": " + entityValue);
+    }
+    ```
 
-**Python**
+    **Python**
 
-```Python
-# Get the first entity (if any)
-entity_type = ''
-entity_value = ''
-if len(json_response["entities"]) > 0:
-    entity_type = json_response["entities"][0]["type"]
-    entity_value = json_response["entities"][0]["entity"]
-    print(entity_type + ': ' + entity_value)
-```
-    
+    ```Python
+    # Get the first entity (if any)
+    entity_type = ''
+    entity_value = ''
+    if len(json_response["entities"]) > 0:
+        entity_type = json_response["entities"][0]["type"]
+        entity_value = json_response["entities"][0]["entity"]
+        print(entity_type + ': ' + entity_value)
+    ```
+
+    **Node.js**
+
+    ```javascript
+    // Get the first entity (if any)
+    if (json["entities"].length > 0) {
+        entity_type = json["entities"][0]["type"]
+        entity_value = json["entities"][0]["entity"]
+        log(entity_type + ': ' + entity_value)
+    }
+    ```
+
 Your code now uses the Language Understanding app to predict an intent as well as any entities that were detected in the input utterance. Your client application must now use that prediction to determine and perform the appropriate action.
 
 4. Beneath the code you just added, find the comment **Apply the appropriate action**, and add the following code, which checks for intents supported by the application (**GetTime**, **GetDate**, and **GetDay**) and determines if any relevant entities have been detected, before calling an existing function to produce an appropriate response.
 
-**C#**
+    **C#**
 
-```C#
-// Apply the appropriate action
-switch (intent)
-{
-    case "time":
-        var location = "local";
-        // Check for entities
-        if (entityType == "Location")
-        {
-            location = entityValue;
-        }
-        // Get the time for the specified location
-        var getTimeTask = Task.Run(() => GetTime(location));
-        string timeResponse = await getTimeTask;
-        Console.WriteLine(timeResponse);
-        break;
-    case "day":
-        var date = DateTime.Today.ToShortDateString();
-        // Check for entities
-        if (entityType == "Date")
-        {
-            date = entityValue;
-        }
-        // Get the day for the specified date
-        var getDayTask = Task.Run(() => GetDay(date));
-        string dayResponse = await getDayTask;
-        Console.WriteLine(dayResponse);
-        break;
-    case "date":
-        var day = DateTime.Today.DayOfWeek.ToString();
-        // Check for entities
-        if (entityType == "Weekday")
-        {
-            day = entityValue;
-        }
+    ```C#
+    // Apply the appropriate action
+    switch (intent)
+    {
+        case "time":
+            var location = "local";
+            // Check for entities
+            if (entityType == "Location")
+            {
+                location = entityValue;
+            }
+            // Get the time for the specified location
+            var getTimeTask = Task.Run(() => GetTime(location));
+            string timeResponse = await getTimeTask;
+            Console.WriteLine(timeResponse);
+            break;
+        case "day":
+            var date = DateTime.Today.ToShortDateString();
+            // Check for entities
+            if (entityType == "Date")
+            {
+                date = entityValue;
+            }
+            // Get the day for the specified date
+            var getDayTask = Task.Run(() => GetDay(date));
+            string dayResponse = await getDayTask;
+            Console.WriteLine(dayResponse);
+            break;
+        case "date":
+            var day = DateTime.Today.DayOfWeek.ToString();
+            // Check for entities
+            if (entityType == "Weekday")
+            {
+                day = entityValue;
+            }
 
-        var getDateTask = Task.Run(() => GetDate(day));
-        string dateResponse = await getDateTask;
-        Console.WriteLine(dateResponse);
-        break;
-    default:
-        // Some other intent (for example, "None") was predicted
-        Console.WriteLine("You said " + result.Text.ToLower());
-        if (result.Text.ToLower().Replace(".", "") == "stop")
-        {
-            intent = result.Text;
-        }
-        else
-        {
-            Console.WriteLine("Try asking me for the time, the day, or the date.");
-        }
-        break;
-}
-```
+            var getDateTask = Task.Run(() => GetDate(day));
+            string dateResponse = await getDateTask;
+            Console.WriteLine(dateResponse);
+            break;
+        default:
+            // Some other intent (for example, "None") was predicted
+            Console.WriteLine("You said " + result.Text.ToLower());
+            if (result.Text.ToLower().Replace(".", "") == "stop")
+            {
+                intent = result.Text;
+            }
+            else
+            {
+                Console.WriteLine("Try asking me for the time, the day, or the date.");
+            }
+            break;
+    }
+    ```
 
-**Python**
+    **Python**
 
-```Python
-# Apply the appropriate action
-if intent == 'GetTime':
-    location = 'local'
-    # Check for entities
-    if entity_type == 'Location':
-        location = entity_value
-    # Get the time for the specified location
-    print(GetTime(location))
+    ```Python
+    # Apply the appropriate action
+    if intent == 'GetTime':
+        location = 'local'
+        # Check for entities
+        if entity_type == 'Location':
+            location = entity_value
+        # Get the time for the specified location
+        print(GetTime(location))
 
-elif intent == 'GetDay':
-    date_string = date.today().strftime("%m/%d/%Y")
-    # Check for entities
-    if entity_type == 'Date':
-        date_string = entity_value
-    # Get the day for the specified date
-    print(GetDay(date_string))
+    elif intent == 'GetDay':
+        date_string = date.today().strftime("%m/%d/%Y")
+        # Check for entities
+        if entity_type == 'Date':
+            date_string = entity_value
+        # Get the day for the specified date
+        print(GetDay(date_string))
 
-elif intent == 'GetDate':
-    day = 'today'
-    # Check for entities
-    if entity_type == 'Weekday':
-        # List entities are lists
-        day = entity_value
-    # Get the date for the specified day
-    print(GetDate(day))
+    elif intent == 'GetDate':
+        day = 'today'
+        # Check for entities
+        if entity_type == 'Weekday':
+            # List entities are lists
+            day = entity_value
+        # Get the date for the specified day
+        print(GetDate(day))
 
-else:
-    # Some other intent (for example, "None") was predicted
-    print('You said {}'.format(result.text))
-    if result.text.lower().replace('.', '') == 'stop':
-        intent = result.text
     else:
-        print('Try asking me for the time, the day, or the date.')
-```
+        # Some other intent (for example, "None") was predicted
+        print('You said {}'.format(result.text))
+        if result.text.lower().replace('.', '') == 'stop':
+            intent = result.text
+        else:
+            print('Try asking me for the time, the day, or the date.')
+    ```
+
+    **Node.js**
+
+    ```javascript
+    // Apply the appropriate action
+    if (intent == 'GetTime') {
+        var location = 'local';
+        // Check for entities
+        if (entity_type == 'Location')
+            location = entity_value;
+        // Get the time for the specified location
+        log(`taking time in ${location}`);
+        log(GetTime(location));
+    }
+    else if (intent == 'GetDay') {
+        var date_string = dateFormat(new Date(), "mm/dd/yyyy");
+        // Check for entities
+        if (entity_type == 'Date')
+            date_string = entity_value;
+            // Get the day for the specified date
+            log(GetDay(date_string));
+    }
+    else if (intent == 'GetDate') {
+            var day = 'today';
+            // Check for entities
+            if (entity_type == 'Weekday')
+                // List entities are lists
+                day = entity_value;
+            // Get the date for the specified day
+            log(GetDate(day));
+    }
+    else {
+            // Some other intent (for example, "None") was predicted
+            log(`You said ${result.text}`)
+            if (result.text.toLowerCase().replace('.', '') == 'stop')
+                intent = result.text;
+            else
+                log('Try asking me for the time, the day, or the date.')
+    }
+    ```
 
 ## Run the client application
 
@@ -446,6 +623,12 @@ else:
 
     ```
     python speaking-clock-client.py
+    ```
+
+    **Node.js**
+
+    ```
+    node speaking-clock-client.js
     ```
 
 2. If using a microphone, speak utterances aloud to test the application. For example, try the following (re-running the program each time):
