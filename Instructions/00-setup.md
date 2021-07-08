@@ -34,12 +34,12 @@ Install [Edge (Chromium)](https://microsoft.com/edge)
 2. Install using the default options package globally
 
 ```
-npm install -g dotenv, path, readline, https, fs
+npm install -g dotenv path readline https fs
 ```
 3. Run following command fore each NEW project to link globally installed packages from the folder of your project:
 
 ```
-npm link dotenv, path, readline, https, fs
+npm link dotenv path readline https fs
 ```
 4. Install and build gyp by use following command. Also required install Visual C++ Build Environment: Visual Studio Build Tools (using "Visual C++ build tools" workload) or Visual Studio Community (using the "Desktop development with C++" workload). 
 
@@ -50,6 +50,8 @@ node-gyp install
 ```
 
 5. Download and install SoX from http://sox.sourceforge.net/. Add folder to the path: C:\Program Files (x86)\sox-14-4-2
+
+4. Download and install SOX for Windows http://sox.sourceforge.net/. Add location ('C:\Program Files (x86)\sox-14-4-2') to the Path system variables. 
 
 ### Python (and required packages)
 
