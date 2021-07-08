@@ -41,6 +41,15 @@ npm install -g dotenv, path, readline, https, fs
 ```
 npm link dotenv, path, readline, https, fs
 ```
+4. Install and build gyp by use following command. Also required install Visual C++ Build Environment: Visual Studio Build Tools (using "Visual C++ build tools" workload) or Visual Studio Community (using the "Desktop development with C++" workload). 
+
+```
+npm config set msvs_version 2019
+npm install -g node-gyp
+node-gyp install
+```
+
+5. Download and install SoX from http://sox.sourceforge.net/. Add folder to the path: C:\Program Files (x86)\sox-14-4-2
 
 ### Python (and required packages)
 

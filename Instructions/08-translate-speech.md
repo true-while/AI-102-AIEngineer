@@ -61,7 +61,7 @@ In this exercise, you'll complete a partially implemented client application tha
     
     ```
     npm install microsoft-cognitiveservices-speech-sdk
-    npm install speaker
+    npm install speaker node-microphone
     ```
 
 3. View the contents of the **translator** folder, and note that it contains a file for configuration settings:
@@ -136,9 +136,9 @@ In this exercise, you'll complete a partially implemented client application tha
     sTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(cog_key, cog_region);
         
     sTranslationConfig.speechRecognitionLanguage = "en-US";
+    sTranslationConfig.addTargetLanguage("fr");
     sTranslationConfig.addTargetLanguage("es");
     sTranslationConfig.addTargetLanguage("hi");
-    sTranslationConfig.addTargetLanguage("de");
     log('Ready to translate from ' + sTranslationConfig.speechRecognitionLanguage);
      ```
 

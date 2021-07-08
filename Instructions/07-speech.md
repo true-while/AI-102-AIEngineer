@@ -517,8 +517,9 @@ Your speaking clock application uses a default voice, which you can change. The 
 
     ```javascript
     // Configure speech synthesis
-    speechConfig.speechSynthesisVoiceName = "en-GB-George"; // add this
-    var synthesizer = new sdk.SpeechSynthesizer(speechConfig, synaudioConfig);
+    ...
+    // add this
+    speechConfig.speechSynthesisVoiceName = "en-GB-George";
     ```
 
 2. Save your changes and return to the integrated terminal for the **speaking-clock** folder, and enter the following command to run the program:

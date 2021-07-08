@@ -17,8 +17,9 @@ function main() {
         // Get Configuration Settings
         const ENV_FILE = path.join(__dirname, '.env');
         dotenv.config({ path: ENV_FILE });
-        cog_key = process.env.COG_SERVICE_KEY;
-        cog_region = process.env.COG_SERVICE_REGION;
+        lu_prediction_key = process.env.LU_PREDICTION_KEY;
+        lu_prediction_region = process.env.LU_PREDICTION_REGION;
+        lu_app_id = process.env.LU_APP_ID;
 
         // Configure speech service and get intent recognizer
 
@@ -26,6 +27,8 @@ function main() {
         // Get the model from the AppID and add the intents we want to use
 
 
+        log("Speak Now");
+        
         // Process speech input
 
  
